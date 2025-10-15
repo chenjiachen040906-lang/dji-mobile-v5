@@ -41,12 +41,52 @@
                 app:layout_constraintTop_toBottomOf="@id/btn_enable_virtual_stick" />
 
             <Button
+                android:id="@+id/btn_rtmp_setting"
+                style="@style/main_fragment_btn"
+                android:text="设置推流地址"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btn_disable_virtual_stick" />
+
+            <Button
+                android:id="@+id/btn_enable_streaming"
+                style="@style/main_fragment_btn"
+                android:text="开始直播"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btn_rtmp_setting" />
+
+            <Button
+                android:id="@+id/btn_disable_streaming"
+                style="@style/main_fragment_btn"
+                android:text="结束直播"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btn_enable_streaming" />
+
+            <Button
+                android:id="@+id/btn_accelerate"
+                style="@style/main_fragment_btn"
+                android:text="加速"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btn_disable_streaming" />
+
+            <Button
+                android:id="@+id/btn_decelerate"
+                style="@style/main_fragment_btn"
+                android:text="减速"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btn_accelerate" />
+
+            <Button
                 android:id="@+id/btn_set_virtual_stick_speed_level"
                 style="@style/main_fragment_btn"
                 android:text="@string/btn_set_virtual_stick_speed_level"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/btn_disable_virtual_stick" />
+                app:layout_constraintTop_toBottomOf="@id/btn_decelerate" />
 
             <Button
                 android:id="@+id/btn_take_off"

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 填充颜色，这里使用蓝色 -->
+    <solid android:color="#2196F3" />
+    <!-- 圆角 -->
+    <corners android:radius="8dp" />
+    <!-- 描边，可选 -->
+    <stroke android:width="2dp" android:color="#FFFFFF" />
+    <!-- 内边距 -->
+    <padding android:left="10dp" android:top="10dp" android:right="10dp" android:bottom="10dp" />
+</shape>
