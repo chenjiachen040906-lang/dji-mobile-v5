@@ -1,14 +1,20 @@
 package dji.sampleV5.aircraft.pages
 
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CompoundButton
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import dji.sampleV5.aircraft.R
 import dji.sampleV5.aircraft.databinding.FragVirtualStickPageBinding
 import dji.sampleV5.aircraft.keyvalue.KeyValueDialogUtil
 import dji.sampleV5.aircraft.models.BasicAircraftControlVM
+import dji.sampleV5.aircraft.models.LiveStreamVM
 import dji.sampleV5.aircraft.models.SimulatorVM
 import dji.sampleV5.aircraft.models.VirtualStickVM
 import dji.sampleV5.aircraft.util.Helper
@@ -31,9 +37,18 @@ import dji.v5.manager.aircraft.virtualstick.VirtualStickManager
 import dji.v5.manager.interfaces.IKeyManager
 import dji.v5.manager.interfaces.ISimulatorManager
 import dji.v5.utils.common.JsonUtil
+import dji.v5.utils.common.StringUtils
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.getValue
 import kotlin.math.abs
+import dji.sampleV5.aircraft.models.CameraStreamDetailVM
+import dji.v5.manager.interfaces.ICameraStreamManager
+import dji.sdk.keyvalue.value.common.ComponentIndexType
+import android.view.SurfaceHolder
+import dji.v5.utils.common.LogUtils
+import dji.v5.utils.common.LogPath
+import android.view.Surface
 
 /**
  * Class Description
@@ -45,9 +60,39 @@ import kotlin.math.abs
  */
 class VirtualStickFragment : DJIFragment(), CompoundButton.OnCheckedChangeListener {
 
+    companion object {
+        private const val KEY_CAMERA_INDEX = "cameraIndex"
+        private const val KEY_ONLY_ONE_CAMERA = "onlyOneCamera"
+        private val SUPPORT_YUV_FORMAT = mapOf(
+            "YUV420（i420）" to ICameraStreamManager.FrameFormat.YUV420_888,
+            "YUV444（i444）" to ICameraStreamManager.FrameFormat.YUV444_888,
+            "NV21" to ICameraStreamManager.FrameFormat.NV21,
+            "YUY2" to ICameraStreamManager.FrameFormat.YUY2,
+            "RGBA" to ICameraStreamManager.FrameFormat.RGBA_8888
+        )
+
+        fun newInstance(cameraIndex: ComponentIndexType, onlyOneCamera: Boolean): CameraStreamDetailFragment {
+            val args = Bundle()
+            args.putInt(KEY_CAMERA_INDEX, cameraIndex.value())
+            args.putBoolean(KEY_ONLY_ONE_CAMERA, onlyOneCamera)
+            val fragment = CameraStreamDetailFragment()
+            fragment.arguments = args
+            return fragment
+        }
+    }
+
     private val basicAircraftControlVM: BasicAircraftControlVM by activityViewModels()
     private val virtualStickVM: VirtualStickVM by activityViewModels()
     private val simulatorVM: SimulatorVM by activityViewModels()
+    private val liveStreamVM: LiveStreamVM by viewModels()
+    // 添加摄像头相关的变量
+    private val cameraStreamDetailVM: CameraStreamDetailVM by viewModels()
+    private var cameraSurface: Surface? = null
+    private var surfaceWidth = -1
+    private var surfaceHeight = -1
+    private lateinit var cameraIndex: ComponentIndexType
+    private var onlyOneCamera = false
+    private var cameraScaleType = ICameraStreamManager.ScaleType.CENTER_INSIDE
     private var binding: FragVirtualStickPageBinding? = null
     private val deviation: Double = 0.02
     private var isZeroOneMode: Boolean = false // 是否开启01-慢速模式
@@ -60,7 +105,15 @@ class VirtualStickFragment : DJIFragment(), CompoundButton.OnCheckedChangeListen
     private var verticalControlMode: VerticalControlMode? = null
     private var rollPitchControlMode: RollPitchControlMode? = null
     private var yawControlMode: YawControlMode? = null
+
     private var rollPitchCoordinateSystem: FlightCoordinateSystem? = null
+    private val emptyInputMessage = "input is empty"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        cameraIndex = ComponentIndexType.find(arguments?.getInt(KEY_CAMERA_INDEX, 0) ?: 0)
+        onlyOneCamera = arguments?.getBoolean(KEY_ONLY_ONE_CAMERA, false) ?: false
+    }
 
     // 用于加载虚拟摇杆页面布局
     override fun onCreateView(
@@ -82,6 +135,7 @@ class VirtualStickFragment : DJIFragment(), CompoundButton.OnCheckedChangeListen
         // 设置监听器
         initBtnClickListener()
         initStickListener() // 虚拟摇杆监听
+        initCameraStream() // 初始化摄像头流
 
         virtualStickVM.listenRCStick() // 遥控器摇杆监听
 
@@ -130,8 +184,14 @@ class VirtualStickFragment : DJIFragment(), CompoundButton.OnCheckedChangeListen
                 }
             })
         }
+        binding?.btnEnableStreaming?.setOnClickListener {
+            showSetLiveStreamRtmpConfigDialog()
+        }
+        binding?.btnDisableStreaming?.setOnClickListener {
+            stopLive()
+        }
         binding?.btnSetVirtualStickSpeedLevel?.setOnClickListener {
-            val speedLevels = doubleArrayOf(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+            val speedLevels = doubleArrayOf(0.001, 0.01, 0.03, 0.05, 0.07, 0.09, 0.1, 0.2, 0.3)
             initPopupNumberPicker(Helper.makeList(speedLevels)) {
                 virtualStickVM.setSpeedLevel(speedLevels[indexChosen[0]])
                 resetIndex()
@@ -212,6 +272,8 @@ class VirtualStickFragment : DJIFragment(), CompoundButton.OnCheckedChangeListen
             binding?.btnStartSimulator?.setChecked(true)
         }
     }
+
+
 
     // 监听虚拟摇杆
     private fun initStickListener() {
@@ -325,6 +387,73 @@ class VirtualStickFragment : DJIFragment(), CompoundButton.OnCheckedChangeListen
             }
         })
     }
+    // 初始化摄像头流
+    private fun initCameraStream() {
+        // 设置摄像头索引（使用默认摄像头）
+        cameraStreamDetailVM.setCameraIndex(cameraIndex)
+
+        // 设置 SurfaceView 的回调
+        binding?.svCamera?.holder?.addCallback(cameraSurfaceCallback)
+
+        // 观察摄像头状态
+        cameraStreamDetailVM.cameraStreamEnableMap.observe(viewLifecycleOwner) { map ->
+            map[cameraIndex]?.let { isEnabled ->
+                // 可以在这里更新UI显示摄像头状态
+                LogUtils.i(LogPath.SAMPLE, "Camera stream enabled: $isEnabled")
+            }
+        }
+
+        // 自动开启摄像头流
+        cameraStreamDetailVM.enableStream(true)
+    }
+
+    // 摄像头 Surface 回调
+    private val cameraSurfaceCallback = object : SurfaceHolder.Callback {
+        override fun surfaceCreated(holder: SurfaceHolder) {
+            cameraSurface = holder.surface
+            updateCameraStream()
+        }
+
+        override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+            surfaceWidth = width
+            surfaceHeight = height
+            updateCameraStream()
+        }
+
+        override fun surfaceDestroyed(holder: SurfaceHolder) {
+            surfaceWidth = 0
+            surfaceHeight = 0
+            cameraSurface = null
+            updateCameraStream()
+        }
+    }
+
+    // 更新摄像头流
+    private fun updateCameraStream() {
+        if (surfaceWidth <= 0 || surfaceHeight <= 0 || cameraSurface == null) {
+            cameraSurface?.let { surface ->
+                cameraStreamDetailVM.removeCameraStreamSurface(surface)
+            }
+            return
+        }
+
+        cameraStreamDetailVM.putCameraStreamSurface(
+            cameraSurface!!,
+            surfaceWidth,
+            surfaceHeight,
+            cameraScaleType
+        )
+    }
+
+    // 在 onDestroyView 中清理资源
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // 移除摄像头 Surface 并关闭流
+        cameraSurface?.let { surface ->
+            cameraStreamDetailVM.removeCameraStreamSurface(surface)
+        }
+        cameraStreamDetailVM.enableStream(false)
+    }
 
     private fun updateVirtualStickInfo() {
         val builder = StringBuilder()
@@ -385,6 +514,62 @@ class VirtualStickFragment : DJIFragment(), CompoundButton.OnCheckedChangeListen
         }
     }
 
+    private fun showSetLiveStreamRtmpConfigDialog() {
+        val factory = LayoutInflater.from(requireContext())
+        val rtmpConfigView = factory.inflate(R.layout.dialog_livestream_rtmp_config_view, null)
+        val etRtmpUrl = rtmpConfigView.findViewById<EditText>(R.id.et_livestream_rtmp_config)
+        etRtmpUrl.setText(
+            liveStreamVM.getRtmpUrl().toCharArray(),
+            0,
+            liveStreamVM.getRtmpUrl().length
+        )
+        val configDialog = requireContext().let {
+            AlertDialog.Builder(it, R.style.Base_ThemeOverlay_AppCompat_Dialog_Alert)
+                .setIcon(android.R.drawable.ic_menu_camera)
+                .setTitle(R.string.ad_set_live_stream_rtmp_config)
+                .setCancelable(false)
+                .setView(rtmpConfigView)
+                .setPositiveButton(R.string.ad_confirm) { configDialog, _ ->
+                    kotlin.run {
+                        val inputValue = etRtmpUrl.text.toString()
+                        if (TextUtils.isEmpty(inputValue)) {
+                            ToastUtils.showToast(emptyInputMessage)
+                        } else {
+                            liveStreamVM.setRTMPConfig(inputValue)
+                            startLive()
+                        }
+                        configDialog.dismiss()
+                    }
+                }
+                .setNegativeButton(R.string.ad_cancel) { configDialog, _ ->
+                    kotlin.run {
+                        configDialog.dismiss()
+                    }
+                }
+                .create()
+        }
+        configDialog.show()
+    }
+
+    private fun startLive() {
+        if (!liveStreamVM.isStreaming()) {
+            liveStreamVM.startStream(object : CommonCallbacks.CompletionCallback {
+                override fun onSuccess() {
+                    ToastUtils.showShortToast(StringUtils.getResStr(R.string.msg_start_live_stream_success))
+                }
+
+                override fun onFailure(error: IDJIError) {
+                    ToastUtils.showLongToast(
+                        StringUtils.getResStr(R.string.msg_start_live_stream_failed, error.description())
+                    )
+                }
+            });
+        }
+    }
+
+    private fun stopLive() {
+        liveStreamVM.stopStream(null)
+    }
     private inner class SendVirtualStickDataTask : TimerTask() {
         override fun run() {
             VirtualStickManager.getInstance().sendVirtualStickAdvancedParam(
