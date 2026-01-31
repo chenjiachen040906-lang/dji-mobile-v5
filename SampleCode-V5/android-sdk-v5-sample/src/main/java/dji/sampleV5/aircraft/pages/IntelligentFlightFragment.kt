@@ -427,7 +427,7 @@ class IntelligentFlightFragment : DJIFragment() {
             map.setMapType(DJIMap.MapType.NORMAL)
         }
 
-        binding?.mapWidget?.initMapLibreMap(requireContext(), onMapReadyListener)
+        binding?.mapWidget?.initAMap(onMapReadyListener)
         binding?.mapWidget?.onCreate(savedInstanceState)
     }
 
