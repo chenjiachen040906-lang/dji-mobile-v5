@@ -81,14 +81,24 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btn_take_off" />
 
+
+            <Button
+                android:id="@+id/btn_orbit_flight"
+                style="@style/main_fragment_btn"
+                android:text="环绕飞行"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btn_landing" />
+
+
+
             <Button
                 android:id="@+id/btn_use_rc_stick"
                 style="@style/main_fragment_btn"
                 android:text="@string/btn_use_rc_stick_value"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/btn_landing" />
-
+                app:layout_constraintTop_toBottomOf="@id/btn_orbit_flight" />
 
             <Button
                 android:id="@+id/btn_enable_virtual_stick_advanced_mode"
@@ -140,6 +150,8 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btn_zero_one_mode"/>
+            <!-- 在 btn_start_simulator 下方添加测试按钮 -->
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 
