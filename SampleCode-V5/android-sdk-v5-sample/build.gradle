@@ -106,6 +106,10 @@ dependencies {
     compileOnly deps.aircraftProvided
     implementation deps.aircraft
 
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    //3D地图so及jar,已经包含定位和搜索功能无需单独引用
+    implementation 'com.amap.api:3dmap-location-search:10.1.600_loc6.5.1_sea9.7.4'
+
     /** <-----------------sample所需--------------------> **/
     implementation project(':uxsdk')
     implementation deps.appcompat

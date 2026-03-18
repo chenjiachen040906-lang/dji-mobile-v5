@@ -37,7 +37,9 @@
     <uses-feature
         android:name="android.hardware.usb.accessory"
         android:required="true"/>
-
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <meta-data android:name="com.amap.api.v2.apikey" android:value="ab871f6d83b115d9bcd364bc2aa4433f">
+    </meta-data>
     <application
         android:name="dji.sampleV5.aircraft.DJIAircraftApplication"
         android:allowBackup="true"
@@ -108,5 +110,7 @@
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false"/>
+
+
     </application>
 </manifest>

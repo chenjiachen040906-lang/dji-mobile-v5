@@ -49,6 +49,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.math.abs
 import kotlin.math.absoluteValue
+import com.amap.api.maps.MapsInitializer
 
 
 class IntelligentFlightFragment : DJIFragment() {
@@ -423,6 +424,10 @@ class IntelligentFlightFragment : DJIFragment() {
     }
 
     private fun createMapView(savedInstanceState: Bundle?) {
+        // 【必须添加这两行】同意隐私政策，否则高德地图绝对出不来
+        MapsInitializer.updatePrivacyShow(requireContext(), true, true)
+        MapsInitializer.updatePrivacyAgree(requireContext(), true)
+
         val onMapReadyListener = MapWidget.OnMapReadyListener { map ->
             map.setMapType(DJIMap.MapType.NORMAL)
         }
