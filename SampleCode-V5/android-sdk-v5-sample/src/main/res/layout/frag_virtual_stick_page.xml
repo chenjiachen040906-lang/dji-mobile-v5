@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white">
 
+    <!-- 左侧功能按钮列表（保持原样，不透明） -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/stick_button_list"
         android:layout_width="0dp"
@@ -18,12 +20,13 @@
         app:layout_constraintVertical_bias="0"
         app:layout_constraintWidth_percent="0.15">
 
+        <!-- 原有按钮列表保持不变 -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/white"
             android:orientation="vertical">
-
+            <!-- 原有的所有按钮保持不变 -->
             <Button
                 android:id="@+id/btn_enable_virtual_stick"
                 style="@style/main_fragment_btn"
@@ -56,7 +59,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btn_enable_streaming" />
 
-
             <Button
                 android:id="@+id/btn_set_virtual_stick_speed_level"
                 style="@style/main_fragment_btn"
@@ -81,7 +83,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btn_take_off" />
 
-
             <Button
                 android:id="@+id/btn_orbit_flight"
                 style="@style/main_fragment_btn"
@@ -89,8 +90,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btn_landing" />
-
-
 
             <Button
                 android:id="@+id/btn_use_rc_stick"
@@ -150,67 +149,251 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/btn_zero_one_mode"/>
-            <!-- 在 btn_start_simulator 下方添加测试按钮 -->
-
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- 摄像头预览（占据除左侧按钮外的全屏） -->
+    <SurfaceView
+        android:id="@+id/sv_camera"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/stick_button_list"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- ==================== 左摇杆：水平移动 ==================== -->
+    <RelativeLayout
+        android:id="@+id/left_joystick_container"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:background="@drawable/bg_joystick_panel_semitransparent"
+        android:layout_marginStart="20dp"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/stick_button_list">
+
+        <!-- 四个方向按钮 -->
+        <!-- 上按钮 -->
+        <Button
+            android:id="@+id/btn_up"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:text="↑"
+            android:textSize="18sp"
+            android:textColor="#007AFF"
+            android:background="@drawable/bg_direction_button_semitransparent"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="8dp"/>
+
+        <!-- 下按钮 -->
+        <Button
+            android:id="@+id/btn_down"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:text="↓"
+            android:textSize="18sp"
+            android:textColor="#007AFF"
+            android:background="@drawable/bg_direction_button_semitransparent"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- 左按钮 -->
+        <Button
+            android:id="@+id/btn_left"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:text="←"
+            android:textSize="18sp"
+            android:textColor="#007AFF"
+            android:background="@drawable/bg_direction_button_semitransparent"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="8dp"/>
+
+        <!-- 右按钮 -->
+        <Button
+            android:id="@+id/btn_right"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:text="→"
+            android:textSize="18sp"
+            android:textColor="#007AFF"
+            android:background="@drawable/bg_direction_button_semitransparent"
+            android:layout_centerVertical="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="8dp"/>
+
+        <!-- 中间文字区域 -->
+        <LinearLayout
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/bg_center_circle_semitransparent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="水平移动"
+                android:textColor="#007AFF"
+                android:textSize="10sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tv_horizontal_speed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.0 m/s"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- ==================== 右摇杆：姿态/高度 ==================== -->
+    <RelativeLayout
+        android:id="@+id/right_joystick_container"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:background="@drawable/bg_joystick_panel_semitransparent"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- 四个方向按钮 -->
+        <!-- 上按钮（上升） -->
+        <Button
+            android:id="@+id/btn_rise"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:text="↑"
+            android:textSize="18sp"
+            android:textColor="#FF9500"
+            android:background="@drawable/bg_direction_button_semitransparent"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="8dp"/>
+
+        <!-- 下按钮（下降） -->
+        <Button
+            android:id="@+id/btn_descend"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:text="↓"
+            android:textSize="18sp"
+            android:textColor="#FF9500"
+            android:background="@drawable/bg_direction_button_semitransparent"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- 左按钮（左转） -->
+        <Button
+            android:id="@+id/btn_turn_left"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:text="↶"
+            android:textSize="18sp"
+            android:textColor="#FF9500"
+            android:background="@drawable/bg_direction_button_semitransparent"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="8dp"/>
+
+        <!-- 右按钮（右转） -->
+        <Button
+            android:id="@+id/btn_turn_right"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:text="↷"
+            android:textSize="18sp"
+            android:textColor="#FF9500"
+            android:background="@drawable/bg_direction_button_semitransparent"
+            android:layout_centerVertical="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="8dp"/>
+
+        <!-- 中间文字区域 -->
+        <LinearLayout
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/bg_center_circle_semitransparent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="姿态/高度"
+                android:textColor="#FF9500"
+                android:textSize="10sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tv_altitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="15.0 m"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- ==================== 红色急停按钮 ==================== -->
+    <Button
+        android:id="@+id/btn_emergency_stop"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:text="急停"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:background="@drawable/bg_emergency_button_circle"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_bias="0.5" />
+
+    <!-- 状态信息区域（浮动在左上角，摄像头区域） -->
     <TextView
         android:id="@+id/virtual_stick_info_tv"
-        android:layout_width="@dimen/uxsdk_500_dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="#00FF00"
+        android:maxLines="15"
+        android:textSize="10dp"
+        android:text="virtual info"
+        android:background="#80000000"
+        android:padding="8dp"
         app:layout_constraintStart_toEndOf="@id/stick_button_list"
         app:layout_constraintTop_toTopOf="parent"
-        android:textColor="@color/green"
-        android:maxLines="30"
-        android:textSize="10dp"
-        android:text="virtual info">
-    </TextView>
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"/>
 
+    <!-- 模拟器状态信息（浮动在右上角） -->
     <TextView
         android:id="@+id/simulator_state_info_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="simulator state info:"
-        android:textSize="13dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-    </TextView>
-
-    <dji.sampleV5.aircraft.virtualstick.OnScreenJoystick
-        android:id="@+id/left_stick_view"
-        android:background="@mipmap/joystick_bg"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        app:layout_constraintStart_toEndOf="@+id/stick_button_list"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <dji.sampleV5.aircraft.virtualstick.OnScreenJoystick
-        android:id="@+id/right_stick_view"
-        android:background="@mipmap/joystick_bg"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <dji.v5.ux.core.widget.hsi.HorizontalSituationIndicatorWidget
-        android:id="@+id/widget_horizontal_situation_indicator"
-        android:layout_width="350dp"
-        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:textSize="12dp"
+        android:background="#80000000"
+        android:padding="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/stick_button_list"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintVertical_bias="0.8" />
-
-    <SurfaceView
-        android:id="@+id/sv_camera"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/stick_button_list"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp">
+    </TextView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
